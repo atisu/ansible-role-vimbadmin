@@ -1,0 +1,76 @@
+# Copyright 2016 Yanis Guenane <yanis+ansible@guenane.org>
+# Author: Yanis Guenane <yanis+ansible@guenane.org>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+
+
+- name: Install OS-specific packages.
+  include: "{{ ansible_os_family }}.yml"
+
+
+- name: Install w/ composer vimbadmin
+  shell: composer create-project opensolutions/vimbadmin "{{ vimbadmin_root_path }}"
+  args:
+    creates: "{{ vimbadmin_root_path }}"
+
+
+- name: Copy configuration file
+  shell: cp "{{ vimbadmin_root_path }}/application/configs/application.ini.dist" "{{ vimbadmin_root_path }}/application/configs/application.ini"
+  args:
+    creates: "{{ vimbadmin_root_path }}/application/configs/application.ini"
+
+
+- name: Edit configuration file
+  lineinfile:
+    dest: "{{ vimbadmin_root_path }}/application/configs/application.ini"
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} = '{{ item.value }}'"
+  with_items:
+    - { 'key': 'resources.doctrine2.connection.options.user', 'value': "{{ vimbadmin_db_user }}" }
+    - { 'key': 'resources.doctrine2.connection.options.password', 'value': "{{ vimbadmin_db_password}}" }
+    - { 'key': 'resources.doctrine2.connection.options.host', 'value': "{{ vimbadmin_db_host }}" }
+
+
+- name: Copy application environment
+  shell: cp "{{ vimbadmin_root_path }}/public/.htaccess.dist" "{{ vimbadmin_root_path }}/public/.htaccess"
+  args:
+    creates: "{{ vimbadmin_root_path }}/public/.htaccess"
+
+
+- name: Initiate database schema
+  shell: ./bin/doctrine2-cli.php orm:schema-tool:create
+  args:
+    chdir: "{{ vimbadmin_root_path }}"
+  register: create_schema
+  ignore_errors: yes
+  # TODO (spredzy): Handle already exists
+  # failed_when: '"already exists" not in create_schema.stderr or "Database schema created successfully!" not in create_schema.stdout'
+
+
+- name: Set date.timezone in php.ini
+  ini_file:
+    dest: "{{ vimbadmin_root_path }}/public/php.ini"
+    section: Date 
+    option: date.timezone
+    value: "{{ vimbadmin_date_timezone }}"
+
+
+- name: Drop httpd vimbadmin.conf configuration file
+  template:
+    src: 00_vimbadmin.conf
+    dest: "{{ httpd_vhost_path }}/00_vimbadmin.conf"
+  notify: reload httpd

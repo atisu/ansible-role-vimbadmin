@@ -1,0 +1,38 @@
+# Copyright 2016 Yanis Guenane <yanis+ansible@guenane.org>
+# Author: Yanis Guenane <yanis+ansible@guenane.org>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: Install required packages
+  package:
+    name: "{{ item }}"
+  with_items:
+    - php-composer
+    - php56
+    - php56-ctype
+    - php56-filter
+    - php56-gettext
+    - php56-hash
+    - php56-json
+    - php56-mcrypt
+    - php56-openssl
+    - php56-phar
+    - php56-pdo
+    - php56-pdo_mysql
+    - php56-mysql
+    - php56-simplexml
+    - php56-mbstring
+    - php56-session
+    - php56-iconv
+    - mod_php56
