@@ -1,0 +1,58 @@
+# Copyright 2016 Attila Csaba Marosi <a.cs.marosi+ansible@gmail.com>
+# Author: Attila Csaba Marosi <a.cs.marosi@gmail.com>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: Install required packages
+  apt:
+    name: "{{ item }}"
+    allow_unauthenticated: yes
+  with_items:
+    - php5-cgi 
+    - php5-cli
+    - php5-mcrypt 
+    - php5-memcache 
+    - php5-mysql
+    - php5-json 
+    - libapache2-mod-php5 
+    - memcached 
+    - git 
+    - mysql-server 
+    - subversion 
+    - python-mysqldb
+
+- name: Download Composer
+  get_url:
+    url: https://getcomposer.org/installer
+    dest: /tmp/installer
+  tags: composer
+
+- name: Install Composer
+  shell: cat /tmp/installer | php -- --install-dir=/usr/local/bin
+  args:
+    creates: /usr/local/bin/composer
+  tags: composer
+
+- name: Rename composer.phar to composer
+  shell: mv /usr/local/bin/composer.phar /usr/local/bin/composer
+  args:
+    creates: /usr/local/bin/composer
+  tags: composer
+
+- name: Make composer executable
+  file: 
+    path: /usr/local/bin/composer
+    mode: a+x
+    state: file
+  tags: composer
